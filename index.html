@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>教科系期中報告 - 數位生態水族箱</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #e0f7fa; font-family: 'Segoe UI', '微軟正黑體', sans-serif; }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 100, 150, 0.05);
+            box-sizing: border-box;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #nav-panel {
+            position: absolute;
+            left: 2%; top: 20px; bottom: 20px;
+            width: 18vw;
+            padding: 25px;
+        }
+
+        #upload-container {
+            position: absolute;
+            top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            width: 55vw; height: 75vh;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            border: 4px solid white;
+            border-radius: 25px;
+            box-shadow: 0 15px 45px rgba(0, 100, 150, 0.1);
+            z-index: 5;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .display-hint {
+            position: absolute;
+            color: rgba(0, 121, 107, 0.2);
+            font-size: 24px; letter-spacing: 10px; font-weight: bold;
+            pointer-events: none; z-index: 0;
+        }
+
+        iframe { width: 100%; height: 100%; border: none; position: relative; z-index: 1; background: transparent; }
+
+        #sidebar {
+            position: absolute;
+            right: 2%; top: 20px; bottom: 20px;
+            width: 18vw; padding: 20px; font-size: 14px;
+            overflow-y: auto;
+        }
+
+        /* --- 按鈕與導覽狀態樣式 --- */
+        .nav-item-container {
+            display: flex; align-items: center;
+            margin: 10px 0; background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px; transition: 0.3s; overflow: hidden;
+            border: 2px solid transparent;
+        }
+        
+        .nav-item-container:hover {
+            background: white; transform: translateX(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .nav-item-container.active {
+            background: #e0f2f1;
+            border: 2px solid #00796b;
+            box-shadow: 0 0 15px rgba(0, 121, 107, 0.3);
+            transform: translateX(10px);
+        }
+
+        .nav-link {
+            flex-grow: 1; padding: 15px;
+            cursor: pointer; color: #00796b; font-weight: bold;
+            text-align: center; text-decoration: none;
+        }
+
+        .nav-item-container.active .nav-link { color: #004d40; }
+
+        .delete-icon {
+            padding: 0 15px; cursor: pointer; color: #ccc;
+            font-size: 20px; transition: 0.2s;
+            border-left: 1px solid rgba(0,0,0,0.05);
+            height: 50px; display: flex; align-items: center;
+        }
+        .delete-icon:hover { color: #ff5252; background: #fff5f5; }
+
+        .nav-item-simple {
+            padding: 15px; margin: 10px 0; background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px; cursor: pointer; transition: 0.3s; color: #00796b;
+            font-weight: bold; text-align: center; display: block;
+        }
+        .nav-item-simple:hover { background: white; transform: translateX(10px); }
+
+        /* 個人資訊樣式 */
+        .user-info {
+            margin: 20px 0 10px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-size: 0.9em;
+            color: #004d40;
+            line-height: 1.8;
+            border: 1px solid rgba(255,255,255,0.4);
+            font-weight: bold;
+        }
+
+        h3, h4 { border-bottom: 2px solid #4db6ac; padding-bottom: 8px; margin-top: 0; color: #004d40; }
+        .section-title { font-weight: bold; color: #00796b; margin-top: 15px; display: block; }
+        .content-text { line-height: 1.6; color: #004d40; text-align: justify; margin: 8px 0; }
+        .tech-list { padding-left: 18px; margin: 5px 0; color: #004d40; line-height: 1.5; }
+        .tech-list li { margin-bottom: 12px; }
+
+        #file-input { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="nav-panel" class="glass-panel">
+        <h3 style="text-align: center;">作品目錄</h3>
+        
+        <div id="homework-list">
+            <div class="nav-item-container">
+                <div class="nav-link" onclick="changeFrame('https://juliachiao.github.io/2026/', this)">3/17 作業</div>
+                <div class="delete-icon" onclick="deleteItem(event)">×</div>
+            </div>
+            <div class="nav-item-container">
+                <div class="nav-link" onclick="changeFrame('https://juliachiao.github.io/00000/', this)">4/14 作品A</div>
+                <div class="delete-icon" onclick="deleteItem(event)">×</div>
+            </div>
+            <div class="nav-item-container">
+                <div class="nav-link" onclick="changeFrame('https://juliachiao.github.io/20261234/', this)">4/14 作品B</div>
+                <div class="delete-icon" onclick="deleteItem(event)">×</div>
+            </div>
+        </div>
+
+        <div class="user-info">
+            姓名：季子蕎<br>
+            學號：413737015<br>
+            班級：教科3A
+        </div>
+        
+        <div class="nav-item-simple" style="background: rgba(77, 182, 172, 0.3);" onclick="document.getElementById('file-input').click()">📁 上傳作業檔案</div>
+        <input type="file" id="file-input" accept=".html" onchange="handleFileUpload(event)">
+        
+        <div class="nav-item-simple" onclick="resetAll()">重置視窗</div>
+    </div>
+
+    <div id="upload-container">
+        <p class="display-hint">作品展示視窗</p>
+        <iframe id="work-frame" src="about:blank"></iframe>
+    </div>
+
+    <div id="sidebar" class="glass-panel">
+        <h3>期中報告心得與理念</h3>
+        
+        <span class="section-title">【本學期心得】</span>
+        <p class="content-text">
+            在這門課程中，我學到了很多關於網頁設計與開發的知識，透過平常的實際操作練習，讓我更加理解如何將一些程式技巧實際應用到網頁設計中。每一個作品都是經過不斷的修改與嘗試後，才能產出滿意的成果。這段過程不僅讓我對設計網頁更加熟悉，也持續累積學習經驗，讓自己更進步。
+        </p>
+
+        <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 15px 0;">
+
+        <span class="section-title">【設計理念】</span>
+        <p class="content-text">
+            本作品以「數位生態系」為核心概念，將抽象的程式碼具象化為生機蓬勃的水族箱。透過毛玻璃質感模擬水底世界的清透與深度，每一株海草與魚兒，都象徵著本學期累積的技術，在數位空間中共同呼吸、成長。
+        </p>
+
+        <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 15px 0;">
+
+        <span class="section-title">【技術實踐說明】</span>
+        <ul class="tech-list">
+            <li><strong>Vertex (頂點座標)：</strong> 運用 <code>beginShape()</code> 與頂點座標運算，模擬海草與魚鰭的有機律動，將數學曲線轉化為動態美學。</li>
+            <li><strong>Class (物件導向)：</strong> 透過類別封裝海草、氣泡與魚群的屬性與行為，實現數位生態元件的模組化管理。</li>
+            <li><strong>Array (陣列) 與 迴圈：</strong> 運用陣列儲存複數動態物件，並透過迴圈高效渲染，營造出豐富且具層次感的水族環境。</li>
+            <li><strong>Vector (向量物理)：</strong> 實作向量位移運算，達成氣泡躲避滑鼠以及魚群徐徐遊動的即時交互感。</li>
+            <li><strong>Iframe (內嵌框架)：</strong> 建立中央整合展示視窗，達成母網頁導覽系統，無需跳頁即可下載載入各週作業。</li>
+            <li><strong>CSS 佈局與 UX：</strong> 運用 <code>absolute</code> 定位與毛玻璃特效，搭配 <code>Active State</code> 選中狀態，打造現代感十足的介面。</li>
+        </ul>
+    </div>
+
+    <script>
+        function changeFrame(url, element) {
+            const iframe = document.getElementById('work-frame');
+            iframe.removeAttribute('srcdoc');
+            iframe.src = url;
+            document.getElementById('file-input').value = "";
+
+            const allContainers = document.querySelectorAll('.nav-item-container');
+            allContainers.forEach(c => c.classList.remove('active'));
+
+            if (element) {
+                const container = element.closest('.nav-item-container');
+                if (container) container.classList.add('active');
+            }
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.type === "text/html") {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const iframe = document.getElementById('work-frame');
+                    iframe.src = "about:blank";
+                    iframe.srcdoc = e.target.result;
+                    document.querySelectorAll('.nav-item-container').forEach(c => c.classList.remove('active'));
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function deleteItem(event) {
+            event.stopPropagation();
+            if (confirm("確定要從清單中刪除此項作業嗎？")) {
+                const item = event.target.closest('.nav-item-container');
+                item.remove();
+                resetAll();
+            }
+        }
+
+        function resetAll() {
+            const iframe = document.getElementById('work-frame');
+            iframe.src = "about:blank";
+            iframe.removeAttribute('srcdoc');
+            document.querySelectorAll('.nav-item-container').forEach(c => c.classList.remove('active'));
+        }
+    </script>
+    <script src="sketch.js"></script>
+</body>
+</html>
